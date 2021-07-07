@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Animal, AnimalDocument } from '../database/schema/animal.schema';
 
+let ObjectId = Types.ObjectId;
 @Injectable()
 export class AnimalsService {
     constructor(@InjectModel(Animal.name) private animalModel: Model<AnimalDocument>) {}
@@ -16,7 +17,8 @@ export class AnimalsService {
     }
 
     async create(data: Animal): Promise<Animal> {
-        var entity = await this.animalModel.create(data);
+        const temp = {...data, residence_id: new ObjectId(data.residence_id)}
+        const entity = await this.animalModel.create(temp);
         return entity;
     }
 
@@ -25,6 +27,11 @@ export class AnimalsService {
     }
 
     async update(id: string, data: Animal): Promise<any> {
-        return await this.animalModel.updateOne({_id: id}, {name: data.name, type: data.type, age: data.age, health: data.health}).exec();
+        const entity = await this.animalModel.findOneAndUpdate({_id: id}, {...data, residence_id: new ObjectId(data.residence_id)}, {new: true});
+        return entity;
+    }
+
+    async upload(id: string, imageURL: string): Promise<any> {
+        return this.animalModel.findOneAndUpdate({_id: id}, {imageURL: imageURL}, {new: true}).exec();
     }
 }
